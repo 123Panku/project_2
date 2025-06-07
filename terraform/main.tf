@@ -4,7 +4,7 @@ provider "aws" {
 
 resource "aws_key_pair" "deployer" {
   key_name   = "key11"
-  public_key = file("C:/Users/Pankaja K M/Downloads/key11.pub")
+  public_key = file("key11.pub")
 }
 
 resource "aws_instance" "web" {

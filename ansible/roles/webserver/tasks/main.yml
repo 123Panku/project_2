@@ -1,0 +1,13 @@
+- name: Install Apache using yum directly
+  ansible.builtin.command: sudo yum install -y httpd
+
+- name: Start and enable Apache
+  ansible.builtin.service:
+    name: httpd
+    state: started
+    enabled: yes
+
+- name: Deploy sample HTML
+  ansible.builtin.copy:
+    content: "<h1>Hello from Ansible Web Server!</h1>"
+    dest: /var/www/html/index.html

@@ -1,0 +1,33 @@
+pipeline {
+  agent any
+
+  environment {
+    TF_DIR = 'terraform'
+    ANSIBLE_DIR = 'ansible'
+  }
+
+  stages {
+    stage('Clone Repo') {
+      steps {
+        git 'https://github.com/123Panku/project_2.git'
+      }
+    }
+
+    stage('Terraform Init & Apply') {
+      steps {
+        dir(TF_DIR) {
+          sh 'terraform init'
+          sh 'terraform apply -auto-approve'
+        }
+      }
+    }
+
+    stage('Run Ansible Playbook') {
+      steps {
+        dir(ANSIBLE_DIR) {
+          sh 'ansible-playbook -i inventory.ini playbook.yml'
+        }
+      }
+    }
+  }
+}

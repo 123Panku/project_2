@@ -1,0 +1,9 @@
+- name: Configure web server
+  hosts: web
+  become: yes
+  #vars:
+    #ansible_pkg_mgr: yum
+    #ansible_yum_use_backend: dnf5
+  roles:
+    - webserver
+

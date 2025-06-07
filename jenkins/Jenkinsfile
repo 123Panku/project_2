@@ -1,33 +1,67 @@
 pipeline {
-  agent any
+    agent any
 
-  environment {
-    TF_DIR = 'terraform'
-    ANSIBLE_DIR = 'ansible'
-  }
-
-  stages {
-    stage('Clone Repo') {
-      steps {
-        git 'https://github.com/123Panku/project_2.git'
-      }
+    tools {
+        terraform 'terraform_1.6'  // Ensure this matches your Jenkins Terraform tool name
     }
 
-    stage('Terraform Init & Apply') {
-      steps {
-        dir(TF_DIR) {
-          sh 'terraform init'
-          sh 'terraform apply -auto-approve'
+    environment {
+        ANSIBLE_HOST_KEY_CHECKING = 'False'
+    }
+
+    stages {
+        stage('Clone Repo') {
+            steps {
+                git credentialsId: 'github-creds', url: 'https://github.com/123Panku/project_2.git', branch: 'main'
+            }
         }
-      }
+
+        stage('Run Ansible Playbook') {
+            steps {
+                sshagent(['ssh-key11']) {
+                    dir('ansible') {
+                        sh 'ansible-playbook -i inventory.ini playbook.yml -u ec2-user'
+                    }
+                }
+            }
+        }
+
+        stage('Terraform Init & Apply') {
+            steps {
+                withCredentials([[
+                    $class: 'UsernamePasswordMultiBinding',
+                    credentialsId: 'aws-creds',
+                    usernameVariable: 'AWS_ACCESS_KEY_ID',
+                    passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                ]]) {
+                    dir('terraform') {
+                        sh 'rm -rf .terraform .terraform.lock.hcl'
+                        sh 'terraform init -upgrade'
+                        sh '''
+terraform plan -detailed-exitcode -out=tfplan || true
+EXIT_CODE=$?
+if [ "$EXIT_CODE" -eq 0 ]; then
+  echo "✅ No changes to apply."
+elif [ "$EXIT_CODE" -eq 2 ]; then
+  terraform apply -auto-approve tfplan
+else
+  echo "❌ Terraform plan failed!"
+  exit $EXIT_CODE
+fi
+'''
+                    }
+                }
+            }
+        }
     }
 
-    stage('Run Ansible Playbook') {
-      steps {
-        dir(ANSIBLE_DIR) {
-          sh 'ansible-playbook -i inventory.ini playbook.yml'
+    post {
+        success {
+            echo '✅ Pipeline completed successfully!'
         }
-      }
+        failure {
+            echo '❌ Pipeline failed.'
+        }
     }
-  }
-}
+}  // ✅ Final closing brace for pipeline block
+

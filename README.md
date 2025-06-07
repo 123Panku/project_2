@@ -11,29 +11,117 @@ Planning :
 >>Store all code in GitHub
 
 ------------------------------------------------------------------------------
-
-Pankaja K M@DESKTOP-PAL35F5 MINGW64 ~/Desktop/My_Project/Day_4 (master)
-$ ssh-keygen -y -f "C:/Users/Pankaja K M/Downloads/key11.pem" > "C:/Users/Pankaja K M/Downloads/key11.pub"
-
-✅ You're in! Great job troubleshooting.
-
-🔑 Summary of what happened:
-You were trying to SSH using the wrong username: ubuntu
-
-But your EC2 instance is running Amazon Linux 2, which uses the default user ec2-user
-
-Once you switched to:
+✅ Step-by-Step Instructions After terraform apply
+🔁 Step 1: Confirm Instance Creation
+After running:
 
 bash
+Copy
+Edit
+cd terraform/
+terraform apply -auto-approve
+✅ Check output:
 
-ssh -i ~/.ssh/key11.pem -o IdentitiesOnly=yes ec2-user@44.201.212.220
+You should see the public IP of the EC2 instance printed.
 
-🔓 The key was accepted and login succeeded.
+Terraform will also update your Ansible inventory file (if you used local-exec to write IP to inventory.ini).
 
-✅ Quick Notes for Future Reference
-AMI Type	Default SSH Username
-Amazon Linux 2	ec2-user
-Ubuntu	ubuntu
-CentOS	centos
-RHEL	ec2-user
-Debian	admin or debian
+Example:
+
+makefile
+Copy
+Edit
+Apply complete! Resources: 1 added.
+Outputs:
+
+instance_ip = "18.214.22.137"
+📁 Step 2: Check or Update Ansible Inventory
+Go to the Ansible folder and open inventory.ini:
+
+ini
+Copy
+Edit
+[web]
+18.214.22.137 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_rsa
+✅ Ensure:
+
+ansible_user=ubuntu (for Ubuntu AMI)
+
+You have access to the private key (~/.ssh/id_rsa)
+
+The IP matches your EC2 instance
+
+🧪 Step 3: Test SSH Access (Optional Debugging)
+You can test SSH access from your terminal:
+
+bash
+Copy
+Edit
+ssh -i ~/.ssh/id_rsa ubuntu@18.214.22.137
+If this works, you’re ready to use Ansible.
+
+▶️ Step 4: Run Ansible Playbook
+From the ansible/ directory, run:
+
+bash
+Copy
+Edit
+ansible-playbook -i inventory.ini playbook.yml
+✅ What it does:
+
+Installs Apache
+
+Starts and enables the Apache service
+
+Writes a sample HTML file to /var/www/html/index.html
+
+🌐 Step 5: Access Your Web Server
+Open a browser
+
+Go to http://<EC2-Public-IP>
+
+You should see:
+
+html
+Copy
+Edit
+<h1>Hello from Ansible Web Server!</h1>
+⚙️ Step 6: Automate via Jenkins
+If Jenkins is set up:
+
+Open Jenkins dashboard
+
+Create a Pipeline Job
+
+Point it to your GitHub repo
+
+Paste the Jenkinsfile into the pipeline script
+
+Click Build Now
+
+✅ Jenkins will:
+
+Clone your repo
+
+Run Terraform
+
+Run Ansible
+
+Deploy and configure your server
+
+🧼 Optional: Cleanup
+To destroy the infrastructure:
+
+bash
+Copy
+Edit
+cd terraform/
+terraform destroy -auto-approve
+🚀 Recap Workflow
+text
+Copy
+Edit
+1. terraform apply → creates EC2 + writes inventory
+2. ansible-playbook → configures EC2 (Apache, index.html)
+3. Browser access → verify deployment
+4. Jenkins → automates steps via CI/CD
